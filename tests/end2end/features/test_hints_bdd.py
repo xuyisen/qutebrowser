@@ -5,15 +5,16 @@
 import textwrap
 
 import pytest
-
 import pytest_bdd as bdd
-bdd.scenarios('hints.feature')
+
+bdd.scenarios("hints.feature")
 
 
 @pytest.fixture(autouse=True)
 def set_up_word_hints(tmpdir, quteproc):
-    dict_file = tmpdir / 'dict'
-    dict_file.write(textwrap.dedent("""
+    dict_file = tmpdir / "dict"
+    dict_file.write(
+        textwrap.dedent("""
         one
         two
         three
@@ -27,5 +28,6 @@ def set_up_word_hints(tmpdir, quteproc):
         eleven
         twelve
         thirteen
-    """))
-    quteproc.set_setting('hints.dictionary', str(dict_file))
+    """)
+    )
+    quteproc.set_setting("hints.dictionary", str(dict_file))

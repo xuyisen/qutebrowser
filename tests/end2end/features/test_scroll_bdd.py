@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import pytest
-
 import pytest_bdd as bdd
-bdd.scenarios('scroll.feature')
+
+bdd.scenarios("scroll.feature")
 
 
 @pytest.fixture(autouse=True)

@@ -5,6 +5,5 @@
 import pytest_bdd as bdd
 
 # pylint: disable=unused-import
-from end2end.features.test_yankpaste_bdd import init_fake_clipboard
 
-bdd.scenarios('caret.feature')
+bdd.scenarios("caret.feature")

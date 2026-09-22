@@ -17,3 +17,9 @@ rules:
     # on: ...
     ignore: |
       /.github/workflows/*.yml
+  indentation:
+    ignore: |
+      /.github/workflows/*.yml
+  comments-indentation:
+    ignore: |
+      /.github/workflows/*.yml

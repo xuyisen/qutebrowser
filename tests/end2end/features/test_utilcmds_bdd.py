@@ -5,7 +5,7 @@
 import pytest
 import pytest_bdd as bdd
 
-bdd.scenarios('utilcmds.feature')
+bdd.scenarios("utilcmds.feature")
 
 
 @pytest.fixture(autouse=True)

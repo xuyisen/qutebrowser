@@ -6,19 +6,18 @@ import os.path
 
 import pytest
 import pytest_bdd as bdd
-
 from helpers import testutils
 
-bdd.scenarios('urlmarks.feature')
+bdd.scenarios("urlmarks.feature")
 
 
 @pytest.fixture(autouse=True)
 def clear_marks(quteproc):
     """Clear all existing marks between tests."""
     yield
-    quteproc.send_cmd(':quickmark-del --all')
+    quteproc.send_cmd(":quickmark-del --all")
     quteproc.wait_for(message="Quickmarks cleared.")
-    quteproc.send_cmd(':bookmark-del --all')
+    quteproc.send_cmd(":bookmark-del --all")
     quteproc.wait_for(message="Bookmarks cleared.")
 
 
@@ -31,21 +30,21 @@ def _check_marks(quteproc, quickmarks, expected, contains):
         contains: True if the line should be there, False otherwise.
     """
     if quickmarks:
-        mark_file = os.path.join(quteproc.basedir, 'config', 'quickmarks')
+        mark_file = os.path.join(quteproc.basedir, "config", "quickmarks")
     else:
-        mark_file = os.path.join(quteproc.basedir, 'config', 'bookmarks',
-                                 'urls')
+        mark_file = os.path.join(quteproc.basedir, "config", "bookmarks", "urls")
 
     quteproc.clear_data()  # So we don't match old messages
-    quteproc.send_cmd(':save')
-    quteproc.wait_for(message='Saved to {}'.format(mark_file))
+    quteproc.send_cmd(":save")
+    quteproc.wait_for(message=f"Saved to {mark_file}")
 
-    with open(mark_file, 'r', encoding='utf-8') as f:
+    with open(mark_file, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
     matched_line = any(
-        testutils.pattern_match(pattern=expected, value=line.rstrip('\n'))
-        for line in lines)
+        testutils.pattern_match(pattern=expected, value=line.rstrip("\n"))
+        for line in lines
+    )
 
     assert matched_line == contains, lines
 

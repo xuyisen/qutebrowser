@@ -11,7 +11,7 @@ import pytest_bdd as bdd
 @pytest.fixture(autouse=True)
 def init_fake_clipboard(quteproc):
     """Make sure the fake clipboard will be used."""
-    quteproc.send_cmd(':debug-set-fake-clipboard')
+    quteproc.send_cmd(":debug-set-fake-clipboard")
 
 
 @bdd.then(bdd.parsers.parse('"{text}" should be found'))
@@ -24,9 +24,8 @@ def check_found_text(request, quteproc, text):
         # https://bugreports.qt.io/browse/QTBUG-53134
         # FIXME: Doesn't actually work, investigate why.
         return
-    quteproc.send_cmd(':yank selection')
-    quteproc.wait_for(message='Setting fake clipboard: {}'.format(
-        json.dumps(text)))
+    quteproc.send_cmd(":yank selection")
+    quteproc.wait_for(message=f"Setting fake clipboard: {json.dumps(text)}")
 
 
-bdd.scenarios('search.feature')
+bdd.scenarios("search.feature")

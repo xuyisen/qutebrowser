@@ -594,6 +594,7 @@ Feature: Various utility commands.
     ## Renderer crashes
 
     # Skipped on Windows as "... has stopped working" hangs.
+    @xfail_norun
     @qtwebkit_skip @no_invalid_lines @posix
     Scenario: Renderer crash
         When I run :open -t chrome://crash

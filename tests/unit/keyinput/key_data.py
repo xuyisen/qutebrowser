@@ -443,6 +443,7 @@ KEYS = [
     Key('KeyboardLightOnOff', 'Keyboard Light On/Off', qtest=False),
     Key('KeyboardBrightnessUp', 'Keyboard Brightness Up', qtest=False),
     Key('KeyboardBrightnessDown', 'Keyboard Brightness Down', qtest=False),
+    Key('Keyboard', qtest=False),
     Key('PowerOff', 'Power Off', qtest=False),
     Key('WakeUp', 'Wake Up', qtest=False),
     Key('Eject', qtest=False),

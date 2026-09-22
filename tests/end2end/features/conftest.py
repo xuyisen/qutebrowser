@@ -4,26 +4,26 @@
 
 """Steps for bdd-like tests."""
 
+import collections
+import json
+import logging
 import os
 import os.path
 import re
-import sys
-import time
-import json
-import logging
-import collections
-import textwrap
-import subprocess
 import shutil
+import subprocess
+import sys
+import textwrap
+import time
 
 import pytest
 import pytest_bdd as bdd
-
-import qutebrowser
-from qutebrowser.utils import log, utils, docutils, version
-from qutebrowser.browser import pdfjs
 from end2end.fixtures import testprocess
 from helpers import testutils
+
+import qutebrowser
+from qutebrowser.browser import pdfjs
+from qutebrowser.utils import docutils, log, utils, version
 
 
 def _get_echo_exe_path():
@@ -33,7 +33,7 @@ def _get_echo_exe_path():
         Path to the "echo"-utility.
     """
     if utils.is_windows:
-        return str(testutils.abs_datapath() / 'userscripts' / 'echo.bat')
+        return str(testutils.abs_datapath() / "userscripts" / "echo.bat")
     else:
         return shutil.which("echo")
 
@@ -42,15 +42,14 @@ def _get_echo_exe_path():
 def pytest_runtest_makereport(item, call):
     """Add a BDD section to the test output."""
     outcome = yield
-    if call.when not in ['call', 'teardown']:
+    if call.when not in ["call", "teardown"]:
         return
     report = outcome.get_result()
 
     if report.passed:
         return
 
-    if (not hasattr(report.longrepr, 'addsection') or
-            not hasattr(report, 'scenario')):
+    if not hasattr(report.longrepr, "addsection") or not hasattr(report, "scenario"):
         # In some conditions (on macOS and Windows it seems), report.longrepr
         # is actually a tuple. This is handled similarly in pytest-qt too.
         #
@@ -58,55 +57,60 @@ def pytest_runtest_makereport(item, call):
         # non-BDD ones.
         return
 
-    if ((sys.stdout.isatty() or testutils.ON_CI) and
-            item.config.getoption('--color') != 'no'):
+    if (sys.stdout.isatty() or testutils.ON_CI) and item.config.getoption(
+        "--color"
+    ) != "no":
         colors = {
-            'failed': log.COLOR_ESCAPES['red'],
-            'passed': log.COLOR_ESCAPES['green'],
-            'keyword': log.COLOR_ESCAPES['cyan'],
-            'reset': log.RESET_ESCAPE,
+            "failed": log.COLOR_ESCAPES["red"],
+            "passed": log.COLOR_ESCAPES["green"],
+            "keyword": log.COLOR_ESCAPES["cyan"],
+            "reset": log.RESET_ESCAPE,
         }
     else:
         colors = {
-            'failed': '',
-            'passed': '',
-            'keyword': '',
-            'reset': '',
+            "failed": "",
+            "passed": "",
+            "keyword": "",
+            "reset": "",
         }
 
     output = []
     if testutils.ON_CI:
-        output.append(testutils.gha_group_begin('Scenario'))
+        output.append(testutils.gha_group_begin("Scenario"))
 
-    output.append("{kw_color}Feature:{reset} {name}".format(
-        kw_color=colors['keyword'],
-        name=report.scenario['feature']['name'],
-        reset=colors['reset'],
-    ))
+    output.append(
+        "{kw_color}Feature:{reset} {name}".format(
+            kw_color=colors["keyword"],
+            name=report.scenario["feature"]["name"],
+            reset=colors["reset"],
+        )
+    )
     output.append(
         "  {kw_color}Scenario:{reset} {name} ({filename}:{line})".format(
-            kw_color=colors['keyword'],
-            name=report.scenario['name'],
-            filename=report.scenario['feature']['rel_filename'],
-            line=report.scenario['line_number'],
-            reset=colors['reset'])
+            kw_color=colors["keyword"],
+            name=report.scenario["name"],
+            filename=report.scenario["feature"]["rel_filename"],
+            line=report.scenario["line_number"],
+            reset=colors["reset"],
+        )
     )
-    for step in report.scenario['steps']:
+    for step in report.scenario["steps"]:
         output.append(
             "    {kw_color}{keyword}{reset} {color}{name}{reset} "
             "({duration:.2f}s)".format(
-                kw_color=colors['keyword'],
-                color=colors['failed'] if step['failed'] else colors['passed'],
-                keyword=step['keyword'],
-                name=step['name'],
-                duration=step['duration'],
-                reset=colors['reset'])
+                kw_color=colors["keyword"],
+                color=colors["failed"] if step["failed"] else colors["passed"],
+                keyword=step["keyword"],
+                name=step["name"],
+                duration=step["duration"],
+                reset=colors["reset"],
+            )
         )
 
     if testutils.ON_CI:
         output.append(testutils.gha_group_end())
 
-    report.longrepr.addsection("BDD scenario", '\n'.join(output))
+    report.longrepr.addsection("BDD scenario", "\n".join(output))
 
 
 ## Given
@@ -118,9 +122,9 @@ def set_setting_given(quteproc, server, opt, value):
 
     This is available as "Given:" step so it can be used as "Background:".
     """
-    if value == '<empty>':
-        value = ''
-    value = value.replace('(port)', str(server.port))
+    if value == "<empty>":
+        value = ""
+    value = value.replace("(port)", str(server.port))
     quteproc.set_setting(opt, value)
 
 
@@ -165,21 +169,21 @@ def fresh_instance(quteproc):
 @bdd.given("I clean up open tabs")
 def clean_open_tabs(quteproc):
     """Clean up open windows and tabs."""
-    quteproc.set_setting('tabs.last_close', 'blank')
-    quteproc.send_cmd(':window-only')
-    quteproc.send_cmd(':tab-only --pinned close')
-    quteproc.send_cmd(':tab-close --force')
-    quteproc.wait_for_load_finished_url('about:blank')
+    quteproc.set_setting("tabs.last_close", "blank")
+    quteproc.send_cmd(":window-only")
+    quteproc.send_cmd(":tab-only --pinned close")
+    quteproc.send_cmd(":tab-close --force")
+    quteproc.wait_for_load_finished_url("about:blank")
 
 
-@bdd.given('pdfjs is available')
+@bdd.given("pdfjs is available")
 def pdfjs_available(data_tmpdir):
     if not pdfjs.is_available():
         pytest.skip("No pdfjs installation found.")
 
 
-@bdd.given('I clear the log')
-@bdd.when('I clear the log')
+@bdd.given("I clear the log")
+@bdd.when("I clear the log")
 def clear_log_lines(quteproc):
     quteproc.clear_data()
 
@@ -197,7 +201,7 @@ def open_path(quteproc, server, path):
     - With "... in a private window" it's opened in a new private window.
     - With "... as a URL", it's opened according to new_instance_open_target.
     """
-    path = path.replace('(port)', str(server.port))
+    path = path.replace("(port)", str(server.port))
     path = testutils.substitute_testdata(path)
 
     new_tab = False
@@ -207,12 +211,12 @@ def open_path(quteproc, server, path):
     as_url = False
     wait = True
 
-    new_tab_suffix = ' in a new tab'
-    new_bg_tab_suffix = ' in a new background tab'
-    new_window_suffix = ' in a new window'
-    private_suffix = ' in a private window'
-    do_not_wait_suffix = ' without waiting'
-    as_url_suffix = ' as a URL'
+    new_tab_suffix = " in a new tab"
+    new_bg_tab_suffix = " in a new background tab"
+    new_window_suffix = " in a new window"
+    private_suffix = " in a private window"
+    do_not_wait_suffix = " without waiting"
+    as_url_suffix = " as a URL"
 
     while True:
         if path.endswith(new_tab_suffix):
@@ -236,17 +240,23 @@ def open_path(quteproc, server, path):
         else:
             break
 
-    quteproc.open_path(path, new_tab=new_tab, new_bg_tab=new_bg_tab,
-                       new_window=new_window, private=private, as_url=as_url,
-                       wait=wait)
+    quteproc.open_path(
+        path,
+        new_tab=new_tab,
+        new_bg_tab=new_bg_tab,
+        new_window=new_window,
+        private=private,
+        as_url=as_url,
+        wait=wait,
+    )
 
 
 @bdd.when(bdd.parsers.parse("I set {opt} to {value}"))
 def set_setting(quteproc, server, opt, value):
     """Set a qutebrowser setting."""
-    if value == '<empty>':
-        value = ''
-    value = value.replace('(port)', str(server.port))
+    if value == "<empty>":
+        value = ""
+    value = value.replace("(port)", str(server.port))
     quteproc.set_setting(opt, value)
 
 
@@ -256,25 +266,25 @@ def run_command(quteproc, server, tmpdir, command):
 
     The suffix "with count ..." can be used to pass a count to the command.
     """
-    if 'with count' in command:
-        command, count = command.split(' with count ')
+    if "with count" in command:
+        command, count = command.split(" with count ")
         count = int(count)
     else:
         count = None
 
-    invalid_tag = ' (invalid command)'
+    invalid_tag = " (invalid command)"
     if command.endswith(invalid_tag):
         command = command.removesuffix(invalid_tag)
         invalid = True
     else:
         invalid = False
 
-    command = command.replace('(port)', str(server.port))
+    command = command.replace("(port)", str(server.port))
     command = testutils.substitute_testdata(command)
-    command = command.replace('(tmpdir)', str(tmpdir))
-    command = command.replace('(dirsep)', os.sep)
-    command = command.replace('(rootpath)', 'C:\\' if utils.is_windows else '/')
-    command = command.replace('(echo-exe)', _get_echo_exe_path())
+    command = command.replace("(tmpdir)", str(tmpdir))
+    command = command.replace("(dirsep)", os.sep)
+    command = command.replace("(rootpath)", "C:\\" if utils.is_windows else "/")
+    command = command.replace("(echo-exe)", _get_echo_exe_path())
 
     quteproc.send_cmd(command, count=count, invalid=invalid)
 
@@ -283,7 +293,7 @@ def run_command(quteproc, server, tmpdir, command):
 def reload(qtbot, server, quteproc, path):
     """Reload and wait until a new request is received."""
     with qtbot.wait_signal(server.new_request):
-        quteproc.send_cmd(':reload')
+        quteproc.send_cmd(":reload")
         quteproc.wait_for_load_finished(path)
 
 
@@ -293,9 +303,13 @@ def wait_until_loaded(quteproc, path):
     quteproc.wait_for_load_finished(path)
 
 
-@bdd.when(bdd.parsers.re(r'I wait for (?P<is_regex>regex )?"'
-                         r'(?P<pattern>[^"]+)" in the log(?P<do_skip> or skip '
-                         r'the test)?'))
+@bdd.when(
+    bdd.parsers.re(
+        r'I wait for (?P<is_regex>regex )?"'
+        r'(?P<pattern>[^"]+)" in the log(?P<do_skip> or skip '
+        r"the test)?"
+    )
+)
 def wait_in_log(quteproc, is_regex, pattern, do_skip):
     """Wait for a given pattern in the qutebrowser log.
 
@@ -309,11 +323,15 @@ def wait_in_log(quteproc, is_regex, pattern, do_skip):
     line.expected = True
 
 
-@bdd.when(bdd.parsers.re(r'I wait for the (?P<category>error|message|warning) '
-                         r'"(?P<message>.*)"'))
+@bdd.when(
+    bdd.parsers.re(
+        r"I wait for the (?P<category>error|message|warning) "
+        r'"(?P<message>.*)"'
+    )
+)
 def wait_for_message(quteproc, server, category, message):
     """Wait for a given statusbar message/error/warning."""
-    quteproc.log_summary('Waiting for {} "{}"'.format(category, message))
+    quteproc.log_summary(f'Waiting for {category} "{message}"')
     expect_message(quteproc, server, category, message)
 
 
@@ -343,33 +361,42 @@ def selection_not_supported(qapp):
         pytest.skip("OS supports primary selection!")
 
 
-@bdd.when(bdd.parsers.re(r'I put "(?P<content>.*)" into the '
-                         r'(?P<what>primary selection|clipboard)'))
+@bdd.when(
+    bdd.parsers.re(
+        r'I put "(?P<content>.*)" into the '
+        r"(?P<what>primary selection|clipboard)"
+    )
+)
 def fill_clipboard(quteproc, server, what, content):
-    content = content.replace('(port)', str(server.port))
-    content = content.replace(r'\n', '\n')
-    quteproc.send_cmd(':debug-set-fake-clipboard "{}"'.format(content))
+    content = content.replace("(port)", str(server.port))
+    content = content.replace(r"\n", "\n")
+    quteproc.send_cmd(f':debug-set-fake-clipboard "{content}"')
 
 
-@bdd.when(bdd.parsers.re(r'I put the following lines into the '
-                         r'(?P<what>primary selection|clipboard):', flags=re.DOTALL))
+@bdd.when(
+    bdd.parsers.re(
+        r"I put the following lines into the "
+        r"(?P<what>primary selection|clipboard):",
+        flags=re.DOTALL,
+    )
+)
 def fill_clipboard_multiline(quteproc, server, what, docstring):
     fill_clipboard(quteproc, server, what, textwrap.dedent(docstring))
 
 
 @bdd.when(bdd.parsers.parse('I hint with args "{args}"'))
 def hint(quteproc, args):
-    quteproc.send_cmd(':hint {}'.format(args))
-    quteproc.wait_for(message='hints: *')
+    quteproc.send_cmd(f":hint {args}")
+    quteproc.wait_for(message="hints: *")
 
 
 @bdd.when(bdd.parsers.parse('I hint with args "{args}" and follow {letter}'))
 def hint_and_follow(quteproc, args, letter):
     args = testutils.substitute_testdata(args)
-    args = args.replace('(python-executable)', sys.executable)
-    quteproc.send_cmd(':hint {}'.format(args))
-    quteproc.wait_for(message='hints: *')
-    quteproc.send_cmd(':hint-follow {}'.format(letter))
+    args = args.replace("(python-executable)", sys.executable)
+    quteproc.send_cmd(f":hint {args}")
+    quteproc.wait_for(message="hints: *")
+    quteproc.send_cmd(f":hint-follow {letter}")
 
 
 @bdd.when("I wait until the scroll position changed")
@@ -377,8 +404,7 @@ def wait_scroll_position(quteproc):
     quteproc.wait_scroll_pos_changed()
 
 
-@bdd.when(bdd.parsers.parse("I wait until the scroll position changed to "
-                            "{x}/{y}"))
+@bdd.when(bdd.parsers.parse("I wait until the scroll position changed to {x}/{y}"))
 def wait_scroll_position_arg(quteproc, x, y):
     quteproc.wait_scroll_pos_changed(x, y)
 
@@ -395,15 +421,15 @@ def clear_ssl_errors(request, quteproc):
         quteproc.terminate()
         quteproc.start()
     else:
-        quteproc.send_cmd(':debug-clear-ssl-errors')
+        quteproc.send_cmd(":debug-clear-ssl-errors")
 
 
 @bdd.when("the documentation is up to date")
 def update_documentation():
     """Update the docs before testing :help."""
     base_path = os.path.dirname(os.path.abspath(qutebrowser.__file__))
-    doc_path = os.path.join(base_path, 'html', 'doc')
-    script_path = os.path.join(base_path, '..', 'scripts')
+    doc_path = os.path.join(base_path, "html", "doc")
+    script_path = os.path.join(base_path, "..", "scripts")
 
     try:
         os.mkdir(doc_path)
@@ -415,21 +441,30 @@ def update_documentation():
         return
 
     try:
-        subprocess.run(['asciidoc'], stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL, check=True)
+        subprocess.run(
+            ["asciidoc"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=True,
+        )
     except (OSError, subprocess.CalledProcessError):
         pytest.skip("Docs outdated and asciidoc unavailable!")
 
-    update_script = os.path.join(script_path, 'asciidoc2html.py')
+    update_script = os.path.join(script_path, "asciidoc2html.py")
     subprocess.run([sys.executable, update_script], check=True)
 
 
 @bdd.when("I wait until PDF.js is ready")
 def wait_pdfjs(quteproc):
-    quteproc.wait_for(message="load status for <qutebrowser.browser.* "
-        "tab_id=* url='qute://pdfjs/web/viewer.html?*'>: LoadStatus.success")
+    quteproc.wait_for(
+        message="load status for <qutebrowser.browser.* "
+        "tab_id=* url='qute://pdfjs/web/viewer.html?*'>: LoadStatus.success"
+    )
     try:
-        quteproc.wait_for(message="JS: [qute://pdfjs/web/viewer.html?*] Uncaught TypeError: Cannot read property 'set' of undefined", timeout=100)
+        quteproc.wait_for(
+            message="JS: [qute://pdfjs/web/viewer.html?*] Uncaught TypeError: Cannot read property 'set' of undefined",
+            timeout=100,
+        )
     except testprocess.WaitForTimeout:
         pass
     else:
@@ -454,14 +489,16 @@ def path_should_be_loaded(quteproc, path):
 @bdd.then(bdd.parsers.parse("{path} should be requested"))
 def path_should_be_requested(server, path):
     """Make sure the given path was loaded from the webserver."""
-    server.wait_for(verb='GET', path='/' + path)
+    server.wait_for(verb="GET", path="/" + path)
 
 
 @bdd.then(bdd.parsers.parse("The requests should be:"))
 def list_of_requests(server, docstring):
     """Make sure the given requests were done from the webserver."""
-    expected_requests = [server.ExpectedRequest('GET', '/' + path.strip())
-                         for path in docstring.split('\n')]
+    expected_requests = [
+        server.ExpectedRequest("GET", "/" + path.strip())
+        for path in docstring.split("\n")
+    ]
     actual_requests = server.get_requests()
     assert actual_requests == expected_requests
 
@@ -469,45 +506,57 @@ def list_of_requests(server, docstring):
 @bdd.then(bdd.parsers.parse("The unordered requests should be:"))
 def list_of_requests_unordered(server, docstring):
     """Make sure the given requests were done (in no particular order)."""
-    expected_requests = [server.ExpectedRequest('GET', '/' + path.strip())
-                         for path in docstring.split('\n')]
+    expected_requests = [
+        server.ExpectedRequest("GET", "/" + path.strip())
+        for path in docstring.split("\n")
+    ]
     actual_requests = server.get_requests()
     # Requests are not hashable, we need to convert to ExpectedRequests
-    actual_requests = [server.ExpectedRequest.from_request(req)
-                       for req in actual_requests]
-    assert (collections.Counter(actual_requests) ==
-            collections.Counter(expected_requests))
+    actual_requests = [
+        server.ExpectedRequest.from_request(req) for req in actual_requests
+    ]
+    assert collections.Counter(actual_requests) == collections.Counter(
+        expected_requests
+    )
 
 
-@bdd.then(bdd.parsers.re(r'the (?P<category>error|message|warning) '
-                         r'"(?P<message>.*)" should be shown'))
+@bdd.then(
+    bdd.parsers.re(
+        r"the (?P<category>error|message|warning) "
+        r'"(?P<message>.*)" should be shown'
+    )
+)
 def expect_message(quteproc, server, category, message):
     """Expect the given message in the qutebrowser log."""
     category_to_loglevel = {
-        'message': logging.INFO,
-        'error': logging.ERROR,
-        'warning': logging.WARNING,
+        "message": logging.INFO,
+        "error": logging.ERROR,
+        "warning": logging.WARNING,
     }
-    message = message.replace('(port)', str(server.port))
-    quteproc.mark_expected(category='message',
-                           loglevel=category_to_loglevel[category],
-                           message=message)
+    message = message.replace("(port)", str(server.port))
+    quteproc.mark_expected(
+        category="message", loglevel=category_to_loglevel[category], message=message
+    )
 
 
-@bdd.then(bdd.parsers.re(r'(?P<is_regex>regex )?"(?P<pattern>[^"]+)" should '
-                         r'be logged( with level (?P<loglevel>.*))?'))
+@bdd.then(
+    bdd.parsers.re(
+        r'(?P<is_regex>regex )?"(?P<pattern>[^"]+)" should '
+        r"be logged( with level (?P<loglevel>.*))?"
+    )
+)
 def should_be_logged(quteproc, server, is_regex, pattern, loglevel):
     """Expect the given pattern on regex in the log."""
     if is_regex:
         pattern = re.compile(pattern)
     else:
-        pattern = pattern.replace('(port)', str(server.port))
+        pattern = pattern.replace("(port)", str(server.port))
 
     args = {
-        'message': pattern,
+        "message": pattern,
     }
     if loglevel:
-        args['loglevel'] = getattr(logging, loglevel.upper())
+        args["loglevel"] = getattr(logging, loglevel.upper())
 
     line = quteproc.wait_for(**args)
     line.expected = True
@@ -519,19 +568,16 @@ def ensure_not_logged(quteproc, pattern):
     quteproc.ensure_not_logged(message=pattern)
 
 
-@bdd.then(bdd.parsers.parse('the javascript message "{message}" should be '
-                            'logged'))
+@bdd.then(bdd.parsers.parse('the javascript message "{message}" should be logged'))
 def javascript_message_logged(quteproc, message):
     """Make sure the given message was logged via javascript."""
     quteproc.wait_for_js(message)
 
 
-@bdd.then(bdd.parsers.parse('the javascript message "{message}" should not be '
-                            'logged'))
+@bdd.then(bdd.parsers.parse('the javascript message "{message}" should not be logged'))
 def javascript_message_not_logged(quteproc, message):
     """Make sure the given message was *not* logged via javascript."""
-    quteproc.ensure_not_logged(category='js',
-                               message='[*] {}'.format(message))
+    quteproc.ensure_not_logged(category="js", message=f"[*] {message}")
 
 
 @bdd.then(bdd.parsers.parse("The session should look like:"))
@@ -544,8 +590,7 @@ def compare_session(quteproc, docstring):
     quteproc.compare_session(docstring)
 
 
-@bdd.then(
-    bdd.parsers.parse("The session saved with {flags} should look like:"))
+@bdd.then(bdd.parsers.parse("The session saved with {flags} should look like:"))
 def compare_session_flags(quteproc, flags, docstring):
     """Compare the current session saved with custom flags."""
     quteproc.compare_session(docstring, flags=flags)
@@ -569,13 +614,13 @@ def check_header(quteproc, header, value):
     content = quteproc.get_content()
     data = json.loads(content)
     print(data)
-    if value == '<unset>':
-        assert header not in data['headers']
+    if value == "<unset>":
+        assert header not in data["headers"]
     elif value.startswith("'") and value.endswith("'"):  # literal match
-        actual = data['headers'][header]
+        actual = data["headers"][header]
         assert actual == value[1:-1]
     else:
-        actual = data['headers'][header]
+        actual = data["headers"][header]
         assert testutils.pattern_match(pattern=value, value=actual)
 
 
@@ -593,15 +638,14 @@ def check_contents_plain(quteproc, text):
     assert text in content
 
 
-@bdd.then(bdd.parsers.parse('the page should not contain the plaintext '
-                            '"{text}"'))
+@bdd.then(bdd.parsers.parse('the page should not contain the plaintext "{text}"'))
 def check_not_contents_plain(quteproc, text):
     """Check the current page's content based on a substring."""
     content = quteproc.get_content().strip()
     assert text not in content
 
 
-@bdd.then(bdd.parsers.parse('the json on the page should be:'))
+@bdd.then(bdd.parsers.parse("the json on the page should be:"))
 def check_contents_json(quteproc, docstring):
     """Check the current page's content as json."""
     content = quteproc.get_content().strip()
@@ -619,11 +663,11 @@ def check_open_tabs(quteproc, docstring):
     It expects a list of URLs, with an optional "(active)" suffix.
     """
     session = quteproc.get_session()
-    active_suffix = ' (active)'
-    pinned_suffix = ' (pinned)'
+    active_suffix = " (active)"
+    pinned_suffix = " (pinned)"
     tabs = docstring.splitlines()
-    assert len(session['windows']) == 1
-    assert len(session['windows'][0]['tabs']) == len(tabs)
+    assert len(session["windows"]) == 1
+    assert len(session["windows"][0]["tabs"]) == len(tabs)
 
     # If we don't have (active) anywhere, don't check it
     has_active = any(active_suffix in line for line in tabs)
@@ -631,13 +675,13 @@ def check_open_tabs(quteproc, docstring):
 
     for i, line in enumerate(tabs):
         line = line.strip()
-        assert line.startswith('- ')
+        assert line.startswith("- ")
         line = line[2:]  # remove "- " prefix
 
         active = False
         pinned = False
 
-        while line.endswith(active_suffix) or line.endswith(pinned_suffix):
+        while line.endswith((active_suffix, pinned_suffix)):
             if line.endswith(active_suffix):
                 # active
                 line = line.removesuffix(active_suffix)
@@ -647,35 +691,37 @@ def check_open_tabs(quteproc, docstring):
                 line = line.removesuffix(pinned_suffix)
                 pinned = True
 
-        session_tab = session['windows'][0]['tabs'][i]
-        current_page = session_tab['history'][-1]
-        assert current_page['url'] == quteproc.path_to_url(line)
+        session_tab = session["windows"][0]["tabs"][i]
+        current_page = session_tab["history"][-1]
+        assert current_page["url"] == quteproc.path_to_url(line)
         if active:
-            assert session_tab['active']
+            assert session_tab["active"]
         elif has_active:
-            assert 'active' not in session_tab
+            assert "active" not in session_tab
 
         if pinned:
-            assert current_page['pinned']
+            assert current_page["pinned"]
         elif has_pinned:
-            assert not current_page['pinned']
+            assert not current_page["pinned"]
 
 
-@bdd.then(bdd.parsers.re(r'the (?P<what>primary selection|clipboard) should '
-                         r'contain "(?P<content>.*)"'))
+@bdd.then(
+    bdd.parsers.re(
+        r"the (?P<what>primary selection|clipboard) should "
+        r'contain "(?P<content>.*)"'
+    )
+)
 def clipboard_contains(quteproc, server, what, content):
-    expected = content.replace('(port)', str(server.port))
-    expected = expected.replace('\\n', '\n')
-    expected = expected.replace('(linesep)', os.linesep)
-    quteproc.wait_for(message='Setting fake {}: {}'.format(
-        what, json.dumps(expected)))
+    expected = content.replace("(port)", str(server.port))
+    expected = expected.replace("\\n", "\n")
+    expected = expected.replace("(linesep)", os.linesep)
+    quteproc.wait_for(message=f"Setting fake {what}: {json.dumps(expected)}")
 
 
-@bdd.then(bdd.parsers.parse('the clipboard should contain:'))
+@bdd.then(bdd.parsers.parse("the clipboard should contain:"))
 def clipboard_contains_multiline(quteproc, server, docstring):
-    expected = textwrap.dedent(docstring).replace('(port)', str(server.port))
-    quteproc.wait_for(message='Setting fake clipboard: {}'.format(
-        json.dumps(expected)))
+    expected = textwrap.dedent(docstring).replace("(port)", str(server.port))
+    quteproc.wait_for(message=f"Setting fake clipboard: {json.dumps(expected)}")
 
 
 @bdd.then("qutebrowser should quit")
@@ -696,12 +742,16 @@ def _get_scroll_values(quteproc):
     return (pos["x"], pos["y"])
 
 
-@bdd.then(bdd.parsers.re(r"the page should be scrolled "
-                         r"(?P<direction>horizontally|vertically)"))
+@bdd.then(
+    bdd.parsers.re(
+        r"the page should be scrolled "
+        r"(?P<direction>horizontally|vertically)"
+    )
+)
 def check_scrolled(quteproc, direction):
     quteproc.wait_scroll_pos_changed()
     x, y = _get_scroll_values(quteproc)
-    if direction == 'horizontally':
+    if direction == "horizontally":
         assert x > 0
         assert y == 0
     else:
@@ -722,16 +772,23 @@ def check_option(quteproc, option, value):
     assert actual_value == value
 
 
-@bdd.then(bdd.parsers.parse("the per-domain option {option} should be set to "
-                            "{value} for {pattern}"))
+@bdd.then(
+    bdd.parsers.parse(
+        "the per-domain option {option} should be set to {value} for {pattern}"
+    )
+)
 def check_option_per_domain(quteproc, option, value, pattern, server):
-    pattern = pattern.replace('(port)', str(server.port))
+    pattern = pattern.replace("(port)", str(server.port))
     actual_value = quteproc.get_setting(option, pattern=pattern)
     assert actual_value == value
 
 
-@bdd.when(bdd.parsers.parse('I setup a fake {kind} fileselector '
-                            'selecting "{files}" and writes to {output_type}'))
+@bdd.when(
+    bdd.parsers.parse(
+        "I setup a fake {kind} fileselector "
+        'selecting "{files}" and writes to {output_type}'
+    )
+)
 def set_up_fileselector(quteproc, py_proc, tmpdir, kind, files, output_type):
     """Set up fileselect.xxx.command to select the file(s)."""
     cmd, args = py_proc(r"""
@@ -752,14 +809,14 @@ def set_up_fileselector(quteproc, py_proc, tmpdir, kind, files, output_type):
                 for selected_file in selected_files:
                     f.write(os.path.abspath(selected_file) + '\n')
     """)
-    files = files.replace('(tmpdir)', str(tmpdir))
-    files = files.replace('(dirsep)', os.sep)
-    args += files.split(' ')
+    files = files.replace("(tmpdir)", str(tmpdir))
+    files = files.replace("(dirsep)", os.sep)
+    args += files.split(" ")
     if output_type == "a temporary file":
-        args += ['--file={}']
+        args += ["--file={}"]
     fileselect_cmd = json.dumps([cmd, *args])
-    quteproc.set_setting('fileselect.handler', 'external')
-    quteproc.set_setting(f'fileselect.{kind}.command', fileselect_cmd)
+    quteproc.set_setting("fileselect.handler", "external")
+    quteproc.set_setting(f"fileselect.{kind}.command", fileselect_cmd)
 
 
 @bdd.then(bdd.parsers.parse("I run {command}"))
